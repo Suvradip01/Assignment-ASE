@@ -1,4 +1,5 @@
 """Explore a held-out policy threshold without changing the YAML config."""
+
 from copy import deepcopy
 from pathlib import Path
 import pandas as pd
@@ -8,7 +9,9 @@ from engine.config import Settings, load_config
 from engine.decision import decide
 
 st.title("What if?")
-st.caption("Exploration uses out-of-fold predictions for September 2026 and does not edit config/settings.yaml.")
+st.caption(
+    "Exploration uses out-of-fold predictions for September 2026 and does not edit config/settings.yaml."
+)
 config = load_config()
 oof_path = Path("models/oof_predictions.csv")
 if not oof_path.exists():
@@ -29,11 +32,25 @@ data = deepcopy(config.data)
 data["risk_bands"]["repeat_customer"]["hold_at_or_above"] = hold_threshold
 data["risk_bands"]["first_time_customer"]["hold_at_or_above"] = hold_threshold
 explore_config = Settings(data)
-decisions = [decide(row.to_dict(), float(row["risk"]), explore_config) for _, row in held_out.iterrows()]
-net = sum(item.est_saved - item.est_lost - item.est_discount_cost - item.est_msg_cost for item in decisions)
-first_holds = sum(item.action == "HOLD" and int(row["customer_prior_orders"]) == 0 for item, (_, row) in zip(decisions, held_out.iterrows()))
-genuine_lost = sum(item.action == "HOLD" and row["final_status"] == "DELIVERED" for item, (_, row) in zip(decisions, held_out.iterrows()))
+decisions = [
+    decide(row.to_dict(), float(row["risk"]), explore_config)
+    for _, row in held_out.iterrows()
+]
+net = sum(
+    item.est_saved - item.est_lost - item.est_discount_cost - item.est_msg_cost
+    for item in decisions
+)
+first_holds = sum(
+    item.action == "HOLD" and int(row["customer_prior_orders"]) == 0
+    for item, (_, row) in zip(decisions, held_out.iterrows())
+)
+genuine_lost = sum(
+    item.action == "HOLD" and row["final_status"] == "DELIVERED"
+    for item, (_, row) in zip(decisions, held_out.iterrows())
+)
 st.metric("Estimated net impact", f"₹{net:,.0f}")
 st.metric("First-time orders held", first_holds)
 st.metric("Genuine orders held", genuine_lost)
-st.caption("Estimates use model risk and configured assumptions; they are not measured results.")
+st.caption(
+    "Estimates use model risk and configured assumptions; they are not measured results."
+)

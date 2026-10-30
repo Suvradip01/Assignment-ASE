@@ -1,4 +1,5 @@
 """Interactive local mock for confirmation and prepaid conversations."""
+
 from datetime import datetime, timedelta
 import streamlit as st
 from engine.whatsapp.flow import start_conversation, handle_inbound, tick
@@ -8,9 +9,11 @@ from engine.store import save_conversation, record_message
 st.title("WhatsApp simulator")
 st.warning("MOCK, nothing is sent")
 
+
 def add_messages(role: str, messages: list[str]) -> None:
     """Append messages to the visible simulator transcript."""
     st.session_state.chat.extend({"role": role, "text": item} for item in messages)
+
 
 if "conv" not in st.session_state:
     kind = st.radio("Example flow", ["CONFIRM", "NUDGE"], horizontal=True)
@@ -18,7 +21,20 @@ if "conv" not in st.session_state:
         flow = "nudge" if kind == "NUDGE" else "confirm"
         decision = Decision("DEMO", kind, 0.4, flow=flow)
         now = datetime.now().astimezone()
-        conv, outbound = start_conversation(decision, {"order_id": "DEMO", "customer_name": "Asha", "items": "Shampoo", "order_value": 649, "address": "12 MG Road, near market", "city": "Delhi", "state": "Delhi", "pincode": "110001"}, now)
+        conv, outbound = start_conversation(
+            decision,
+            {
+                "order_id": "DEMO",
+                "customer_name": "Asha",
+                "items": "Shampoo",
+                "order_value": 649,
+                "address": "12 MG Road, near market",
+                "city": "Delhi",
+                "state": "Delhi",
+                "pincode": "110001",
+            },
+            now,
+        )
         st.session_state.conv = conv
         st.session_state.chat = []
         add_messages("assistant", outbound)
@@ -37,13 +53,18 @@ if "conv" in st.session_state:
     if conv.state in {"AWAITING_CONFIRMATION", "AWAITING_ADDRESS"}:
         quick_replies = [("Yes, confirm", "YES"), ("No, cancel", "NO")]
     elif conv.state in {"AWAITING_PREPAID_CHOICE", "AWAITING_PAYMENT"}:
-        quick_replies = [("Pay online", "PAY"), ("Keep COD", "KEEP_COD"), ("Cancel", "CANCEL")]
+        quick_replies = [
+            ("Pay online", "PAY"),
+            ("Keep COD", "KEEP_COD"),
+            ("Cancel", "CANCEL"),
+        ]
     else:
         quick_replies = []
     cols = st.columns(max(1, len(quick_replies)))
     for col, (label, value) in zip(cols, quick_replies):
         if col.button(label, key=f"quick_{value}"):
-            now = datetime.now().astimezone(); msg_id = f"quick-{now.timestamp()}"
+            now = datetime.now().astimezone()
+            msg_id = f"quick-{now.timestamp()}"
             conv, outbound = handle_inbound(conv, value, msg_id, now)
             st.session_state.conv = conv
             add_messages("user", [label])
@@ -58,7 +79,8 @@ if "conv" in st.session_state:
         message = st.text_input("Customer reply")
         submitted = st.form_submit_button("Send reply")
     if submitted:
-        now = datetime.now().astimezone(); msg_id = f"typed-{now.timestamp()}"
+        now = datetime.now().astimezone()
+        msg_id = f"typed-{now.timestamp()}"
         conv, outbound = handle_inbound(conv, message, msg_id, now)
         st.session_state.conv = conv
         add_messages("user", [message or "(empty message)"])

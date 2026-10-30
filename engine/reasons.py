@@ -16,8 +16,8 @@ def build_reason(decision: Any, facts: dict[str, Any]) -> str:
     if not reasons: reasons=["risk falls in this action's configured band"]
     line={
         "SHIP": "Shipping as-is has no intervention cost.",
-        "CONFIRM": f"Estimated WhatsApp message cost: ?{decision.est_msg_cost:.0f}.",
-        "NUDGE": f"Prepaid discount estimate: ?{decision.discount_inr:.0f}; message cost: ?{decision.est_msg_cost:.0f}.",
-        "HOLD": f"Estimated ?{decision.est_saved:.0f} avoided versus shipping; possible genuine-order loss: ?{decision.est_lost:.0f}.",
+        "CONFIRM": f"Estimated WhatsApp message cost: ₹{decision.est_msg_cost:.0f}.",
+        "NUDGE": f"Estimated prepaid discount: ₹{decision.discount_inr:.0f}; message cost: ₹{decision.est_msg_cost:.0f}.",
+        "HOLD": f"Estimated return cost avoided: ₹{decision.est_saved:.0f}; estimated cost if a genuine order is held: ₹{decision.est_lost:.0f}.",
     }.get(decision.action,"Order needs review.")
     return f"{decision.action}: {decision.risk:.0%} chance of return. Why: {', '.join(reasons)}. {line}"

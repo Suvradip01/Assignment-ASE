@@ -41,6 +41,15 @@ def test_decision_boundaries_and_overrides() -> None:
     assert decide(junk,.1,cfg).flow=="confirm_address"
     assert decide({**base,"order_value":0},.1,cfg).flags==["invalid_order_value"]
 
+def test_hold_reason_uses_clear_estimate_labels_and_currency() -> None:
+    """Format HOLD impact estimates with rupees and distinguish both estimates."""
+    cfg=load_config(); base={"order_id":"1","order_datetime":"2026-01-01","customer_name":"asdf","phone":"bad","address":"xyz","city":"Delhi","state":"Delhi","pincode":"110001","order_value":649,"num_items":1,"items":"Shampoo","customer_prior_orders":1,"customer_prior_rto":0,"utm_source":"meta_ads","phone_valid":0,"address_score":.1,"name_fake":True}
+    decision=decide(base,.2,cfg)
+    assert decision.action=="HOLD"
+    assert "₹" in decision.reason and "?" not in decision.reason
+    assert "Estimated return cost avoided" in decision.reason
+    assert "estimated cost if a genuine order is held" in decision.reason
+
 def test_text_parser_and_metrics() -> None:
     """Recognize common text and aggregate empty buckets safely."""
     assert address_score(".")<.3 and is_fake_name("asdf")

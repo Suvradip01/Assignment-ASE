@@ -6,4 +6,5 @@ data/app.db
 models/*.joblib
 models/
 .pytest_cache/
+Associate Software Engineer – Take-Home Assignment.pdf
 tmp_pdf_text.txt

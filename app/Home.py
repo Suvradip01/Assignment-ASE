@@ -68,8 +68,6 @@ else:
     llm_used = bool(day.llm_source.isin(["groq", "cache"]).any()) if "llm_source" in day else False
     if fallback_share > cfg["rules"]["llm_fallback_share_alert"] and llm_used:
         st.warning(f"Text-check fallback share is {fallback_share:.0%}; review provider availability.")
-    elif fallback_share == 1.0:
-        st.info("These batch scores use local text rules by design; this is not a Groq availability warning. Live text checks can use Groq on Try an order.")
 if not messages.empty:
     inbound = messages[messages.direction == "inbound"]
     if len(inbound):

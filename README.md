@@ -1,38 +1,72 @@
 # COD Order Decision Engine
 
-A decision support app for reducing Cash on Delivery (COD) returns to origin (RTO) for a direct-to-consumer haircare brand.
-It estimates return risk from historical order data and recommends SHIP, CONFIRM, NUDGE to prepaid, or HOLD.
-It includes a WhatsApp flow simulator, a founder dashboard, and repeatable data and backtest reports.
+## 1. Problem statement
 
-## Run locally
+The assignment describes a direct-to-consumer haircare business where about 55% of orders are Cash on Delivery (COD), and about 28% of COD orders become Return to Origin (RTO). An RTO costs an estimated ₹169.40: ₹65 forward shipping + ₹65 return shipping + ₹25 packaging and handling + expected damage cost of 8% × ₹180. The business receives about 3,000 orders each month, has an average order value of ₹649, a delivered-order gross margin of about 62%, and spends ₹300 or more to acquire a new customer. Prepaid orders have an estimated 4% RTO rate.
 
-Use Python 3.11. From the repository root, run these commands in PowerShell:
+Operations wants to reduce losses from returned orders. Marketing wants to avoid rejecting genuine first-time customers after paying to acquire them. The system should help balance both goals using estimated rupee impact, while keeping decisions understandable and adjustable.
+
+## 2. Solution
+
+This project cleans the supplied historical order data, estimates each order's RTO risk, and applies transparent business rules to recommend one of four actions:
+
+- **SHIP:** ship the order as-is.
+- **CONFIRM:** ask the customer to confirm before dispatch.
+- **NUDGE:** offer an estimated discount to encourage prepaid payment.
+- **HOLD:** hold the order for review or prevent dispatch when configured rules require it.
+
+Each recommendation includes a plain-English reason and estimated impact. First-time and repeat customers can have different risk thresholds. Costs, thresholds, discounts, and WhatsApp timing are editable in `config/settings.yaml` and `config/whatsapp_templates.yaml`.
+
+The model estimates return probability from tabular order data. Python rules handle action selection and rupee calculations so these decisions are repeatable and auditable. Optional Groq text checks help assess messy names and addresses; Groq may also classify unclear WhatsApp replies. It does not choose an action, probability, threshold, or discount. Common yes/no replies are handled by a deterministic parser. The text layer falls back to local rules and cache when no key is available or a request fails.
+
+The WhatsApp simulator is local-only, and the dashboard labels financial impacts as estimates. No real messages or payments are sent.
+
+## 3. Setup and startup (Windows PowerShell)
+
+### Prerequisites
+
+- Windows PowerShell
+- Python 3.11
+- This repository, including `orders_sample.csv`
+- Internet access for installing Python packages
+
+From the repository root, create and activate a virtual environment, install dependencies, and generate the local model, database, and reports:
 
 ```powershell
+python --version
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m scripts.run_all
+```
+
+If PowerShell blocks activation, allow it for the current terminal only, then activate the environment:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+Start the app:
+
+```powershell
 python -m streamlit run app/Home.py
 ```
 
-Open <http://localhost:8501>. The first pipeline run cleans the included `orders_sample.csv`, trains and evaluates the model, scores orders into a local SQLite database, and regenerates the reports under `docs/`. It needs no API key. Stop the app with `Ctrl+C`.
+Open <http://localhost:8501>. Keep that terminal open while using the app. Stop Streamlit with `Ctrl+C`.
 
-To run the automated checks, open another terminal in the repository, activate the environment, and run:
+The first `python -m scripts.run_all` run cleans `orders_sample.csv`, trains and evaluates the risk model, scores orders into a local SQLite database, runs the backtest, and regenerates analysis reports under `docs/`. It works without an API key. For later launches, activate `.venv` and run only `python -m streamlit run app/Home.py` unless you need to regenerate the model and reports.
 
-```powershell
-python -m pytest
-```
+### Optional: enable Groq for live text checks
 
-### Optional Groq text checks
-
-The app works without a provider key using local text rules and the committed text-feature cache. To enable Groq for live text checks in **Try an order**:
+Groq is optional; the app runs with local rules and the committed text-feature cache when it is not configured. To enable Groq for live checks in **Try an order**, copy the example environment file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Edit `.env` and set:
+Open `.env` and set your own key:
 
 ```dotenv
 LLM_PROVIDER=groq
@@ -40,17 +74,23 @@ GROQ_API_KEY=your_groq_api_key
 LLM_MODEL=openai/gpt-oss-20b
 ```
 
-Restart Streamlit after changing `.env`. The Try an order page shows whether its text check came from `groq`, `cache`, or `rules`. The batch pipeline intentionally uses local text rules; it does not send every historical order to Groq. The dashboard explains this so a rule-based batch is not mistaken for a provider outage.
+Save `.env` and restart Streamlit. The Try an order page shows `groq`, `cache`, or `rules` as the text-check source. The historical batch pipeline intentionally uses local text rules and does not send every sample order to Groq. The LLM receives only customer name, address, city, and state text; it never receives phone numbers, order IDs, or order values. Never commit `.env` or share your API key.
 
-The text checker may send only customer name, address, city, and state. It never sends phone numbers, order IDs, or order values. If Groq is not configured or a request fails, the app uses local rules instead of failing the order.
+### Run tests
 
-## How it works
+With `.venv` activated, run:
+
+```powershell
+python -m pytest
+```
+
+## 4. How the system works
 
 ```text
 orders_sample.csv
        |
        v
-clean and validate -> text checks -> tabular risk model -> estimated risk
+clean and validate -> text checks -> tabular risk model -> estimated RTO risk
                                                         |
                                   YAML thresholds + deterministic economics
                                                         |
@@ -58,67 +98,63 @@ clean and validate -> text checks -> tabular risk model -> estimated risk
                                                         |
                                      SQLite -> Streamlit dashboard
 
-WhatsApp simulator -> templates + reply parser -> mock conversation state
+WhatsApp simulator -> message templates + reply parser -> mock conversation state
 ```
 
-The model estimates the chance of RTO. Python rules and YAML settings choose the action, discount, and expected-value calculations. The optional LLM is limited to language-dependent text checks and unclear WhatsApp reply classification; it never sets risk, thresholds, costs, discounts, or actions. Deterministic rules handle common replies such as yes/no and Hinglish equivalents.
+### App pages
 
-## App pages
+- **Home:** daily action counts, estimated saved/lost/net impact, recent trends, and orders needing human review. If the selected date has no sample orders, it displays the latest available sample date.
+- **Try an order:** score a manually entered order or preset and inspect its risk, action, explanation, flags, text-check source, and estimated action values.
+- **WhatsApp simulator:** exercise confirmation and prepaid message flows, customer replies, reminders, and timeouts.
+- **What if?:** explore how a different hold threshold changes estimated held-out policy results; it does not edit the saved configuration.
 
-- **Home:** daily action counts, estimated financial impact, recent trends, and orders needing human review.
-- **Try an order:** score a manually entered example or preset; inspect risk, action, explanation, flags, text-check source, and estimated action values.
-- **WhatsApp simulator:** exercise confirmation and prepaid flows, customer replies, and timeouts. It is a mock; no messages or payments are sent.
-- **What if?:** change a hold threshold for exploration and see estimated held-out policy impact. It does not edit the saved configuration.
+## 5. Change business settings
 
-All dashboard ₹ amounts are estimates based on model risk and configured assumptions, not measured savings or losses.
+Edit `config/settings.yaml`:
 
-## Change business settings
-
-Edit [`config/settings.yaml`](config/settings.yaml):
-
-- `costs`: shipping, packaging, damage, margin, acquisition, and payment assumptions.
-- `risk_bands`: action thresholds for first-time and repeat customers.
+- `costs`: shipping, packaging, damage, margin, acquisition, payment, and message cost assumptions.
+- `risk_bands`: action cutoffs for first-time and repeat customers.
 - `rules`: minimum order value, manual overrides, and alert levels.
-- `prepaid_offer`: discount calculation limits and customer/company split.
+- `prepaid_offer`: discount limits and customer/company savings split.
 - `whatsapp`: quiet hours, reminders, timeouts, and message limits.
 - `assumptions`: estimated confirmation and prepaid response behavior.
 - `analysis`: backtest comparison and sensitivity scenarios.
 
-Invalid settings raise a validation error. The What if? page is for exploration only; change YAML to change the configured business policy.
+Edit `config/whatsapp_templates.yaml` to change the mock English and Hinglish messages. Invalid business settings raise a validation error rather than silently using defaults.
 
-## Reports and project records
+## 6. Reports and project records
 
-The pipeline creates or updates these generated reports:
+The pipeline generates or updates:
 
 - [`docs/data_quality.md`](docs/data_quality.md): cleaning and data quality summary.
-- [`docs/findings.md`](docs/findings.md): segment findings generated from the sample.
+- [`docs/findings.md`](docs/findings.md): segment findings from the sample.
 - [`docs/backtest_summary.md`](docs/backtest_summary.md): policy comparison and sensitivity analysis.
 - [`docs/discount_table.md`](docs/discount_table.md): discount economics.
-- [`docs/memo_numbers.md`](docs/memo_numbers.md): generated figures for use in the founder memo.
+- [`docs/memo_numbers.md`](docs/memo_numbers.md): generated figures to use in the founder memo.
 - [`docs/DECISION_LOG.md`](docs/DECISION_LOG.md): implementation choices and rationale.
 
-The generated numbers are estimates from a small historical sample and configured assumptions. They should not be presented as measured business results.
+These results are based on a small historical sample and configured assumptions. Estimated impact is not measured business savings or losses.
 
-## Assignment submission checklist
+## 7. Submission checklist
 
-- [x] Runnable application, source code, sample data, and run instructions.
-- [x] Decision log and generated analysis/backtest figures.
-- [ ] Founder business memo (1–2 pages): write this using the generated figures and findings; it is intentionally not included here.
-- [ ] AI usage log: complete [`docs/AI_USAGE_LOG.md`](docs/AI_USAGE_LOG.md) with the tools actually used and examples you personally reviewed; the template is intentionally blank.
-- [ ] GitHub submission: publish this repository or grant the hiring team access. No remote is configured in this local checkout.
+- [x] Source code, sample data, and local setup instructions.
+- [x] Decision log and generated findings/backtest/discount figures.
+- [ ] Founder business memo (1–2 pages): prepare this using the generated data and figures; the memo is intentionally not included here.
+- [ ] AI usage log: complete [`docs/AI_USAGE_LOG.md`](docs/AI_USAGE_LOG.md) with tools actually used and examples you personally reviewed. The template is intentionally blank.
+- [ ] GitHub submission: publish the repository or grant the hiring team access. This local checkout has no Git remote configured.
 
-## Known limits
+## 8. Known limits
 
-- The supplied dataset is a small historical sample and may not represent current customer behavior or the full monthly order volume.
-- Risk scores, policy backtests, and ₹ impact figures depend on assumptions and are estimates. Validate them with a controlled rollout before using them to cancel orders automatically.
-- The WhatsApp simulator is local-only. A production integration would need WhatsApp Business API setup, consent handling, delivery/payment provider integration, and monitoring.
-- Optional Groq use requires a working API key, network access, and a model available to that key. Local rules and cache provide the fallback.
+- The supplied dataset is a small historical sample and may not represent current customer behavior or full monthly order volume.
+- Risk scores and policy impact depend on model performance and assumptions. Validate with a controlled rollout before using HOLD to cancel orders automatically.
+- The WhatsApp simulator is a mock. Production use would need WhatsApp Business API setup, consent handling, delivery/payment integration, and operational monitoring.
+- Groq requires a valid key, network access, and model access. Local rules and cache provide the fallback.
 
-## Project layout
+## 9. Project layout
 
 ```text
 app/          Streamlit dashboard and interactive pages
-config/       Business thresholds and WhatsApp templates
+config/       Business settings and WhatsApp templates
 data/         Local SQLite state and committed text cache
 docs/         Generated reports, decision log, and human-completed logs
 engine/       Cleaning, features, model, economics, decisions, and chat flow

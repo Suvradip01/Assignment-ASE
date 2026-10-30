@@ -18,7 +18,7 @@ if "conv" not in st.session_state:
         flow = "nudge" if kind == "NUDGE" else "confirm"
         decision = Decision("DEMO", kind, 0.4, flow=flow)
         now = datetime.now().astimezone()
-        conv, outbound = start_conversation(decision, {"order_id": "DEMO", "customer_name": "Asha", "items": "Shampoo", "order_value": 649, "city": "Delhi", "state": "Delhi", "pincode": "110001"}, now)
+        conv, outbound = start_conversation(decision, {"order_id": "DEMO", "customer_name": "Asha", "items": "Shampoo", "order_value": 649, "address": "12 MG Road, near market", "city": "Delhi", "state": "Delhi", "pincode": "110001"}, now)
         st.session_state.conv = conv
         st.session_state.chat = []
         add_messages("assistant", outbound)

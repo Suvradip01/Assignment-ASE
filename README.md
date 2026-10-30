@@ -1,5 +1,12 @@
 # COD Order Decision Engine
 
+## Submission files
+
+- [Founder business memo (PDF)](output/pdf/founder_business_memo.pdf)
+- [Take-home assignment brief (PDF)](<Associate Software Engineer – Take-Home Assignment.pdf>)
+- [Decision log](docs/DECISION_LOG.md)
+- [AI usage log](docs/AI_USAGE_LOG.md)
+
 ## 1. Problem statement
 
 The assignment describes a direct-to-consumer haircare business where about 55% of orders are

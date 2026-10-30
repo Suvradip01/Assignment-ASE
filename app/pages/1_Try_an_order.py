@@ -21,22 +21,31 @@ if st.button("Load preset"):
         st.session_state[f"order_{key}"] = value
     st.rerun()
 
+defaults = {
+    "order_order_id": "DEMO001", "order_order_datetime": "2026-10-30 10:00",
+    **{f"order_{key}": value for key, value in presets["Clean repeat customer"].items()},
+    "order_items": "Shampoo", "order_num_items": 1,
+    "order_utm_source": "meta_ads",
+}
+for key, value in defaults.items():
+    st.session_state.setdefault(key, value)
+
 with st.form("order"):
     order = {
-        "order_id": st.text_input("Order ID", "DEMO001", key="order_order_id"),
-        "order_datetime": st.text_input("Order date/time", "2026-10-30 10:00", key="order_order_datetime"),
-        "customer_name": st.text_input("Customer name", "Asha Sharma", key="order_customer_name"),
-        "phone": st.text_input("Phone", "9876543210", key="order_phone"),
-        "address": st.text_input("Address", "12 MG Road, near market", key="order_address"),
-        "city": st.text_input("City", "Delhi", key="order_city"),
-        "state": st.text_input("State", "Delhi", key="order_state"),
-        "pincode": st.text_input("Pincode", "110001", key="order_pincode"),
-        "order_value": st.number_input("Order value", min_value=0, value=649, key="order_order_value"),
-        "items": st.text_input("Items", "Shampoo", key="order_items"),
-        "num_items": st.number_input("Items count", min_value=1, value=1, key="order_num_items"),
-        "customer_prior_orders": st.number_input("Prior orders", min_value=0, value=1, key="order_customer_prior_orders"),
-        "customer_prior_rto": st.number_input("Prior returns", min_value=0, value=0, key="order_customer_prior_rto"),
-        "utm_source": st.text_input("Source", "meta_ads", key="order_utm_source"),
+        "order_id": st.text_input("Order ID", key="order_order_id"),
+        "order_datetime": st.text_input("Order date/time", key="order_order_datetime"),
+        "customer_name": st.text_input("Customer name", key="order_customer_name"),
+        "phone": st.text_input("Phone", key="order_phone"),
+        "address": st.text_input("Address", key="order_address"),
+        "city": st.text_input("City", key="order_city"),
+        "state": st.text_input("State", key="order_state"),
+        "pincode": st.text_input("Pincode", key="order_pincode"),
+        "order_value": st.number_input("Order value", min_value=0, key="order_order_value"),
+        "items": st.text_input("Items", key="order_items"),
+        "num_items": st.number_input("Items count", min_value=1, key="order_num_items"),
+        "customer_prior_orders": st.number_input("Prior orders", min_value=0, key="order_customer_prior_orders"),
+        "customer_prior_rto": st.number_input("Prior returns", min_value=0, key="order_customer_prior_rto"),
+        "utm_source": st.text_input("Source", key="order_utm_source"),
     }
     submitted = st.form_submit_button("Score")
 

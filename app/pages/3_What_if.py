@@ -29,10 +29,10 @@ data = deepcopy(config.data)
 data["risk_bands"]["repeat_customer"]["hold_at_or_above"] = hold_threshold
 data["risk_bands"]["first_time_customer"]["hold_at_or_above"] = hold_threshold
 explore_config = Settings(data)
-decisions = [decide(row.to_dict(), float(row.risk), explore_config) for row in held_out.itertuples(index=False)]
+decisions = [decide(row.to_dict(), float(row["risk"]), explore_config) for _, row in held_out.iterrows()]
 net = sum(item.est_saved - item.est_lost - item.est_discount_cost - item.est_msg_cost for item in decisions)
-first_holds = sum(item.action == "HOLD" and int(row.customer_prior_orders) == 0 for item, row in zip(decisions, held_out.itertuples()))
-genuine_lost = sum(item.action == "HOLD" and row.final_status == "DELIVERED" for item, row in zip(decisions, held_out.itertuples()))
+first_holds = sum(item.action == "HOLD" and int(row["customer_prior_orders"]) == 0 for item, (_, row) in zip(decisions, held_out.iterrows()))
+genuine_lost = sum(item.action == "HOLD" and row["final_status"] == "DELIVERED" for item, (_, row) in zip(decisions, held_out.iterrows()))
 st.metric("Estimated net impact", f"₹{net:,.0f}")
 st.metric("First-time orders held", first_holds)
 st.metric("Genuine orders held", genuine_lost)

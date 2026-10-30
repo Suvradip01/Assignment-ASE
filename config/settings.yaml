@@ -50,3 +50,10 @@ model:
   use_courier: false
   use_time_features: false
   test_month: "2026-09"
+analysis:
+  ops_hold_risk: 0.50
+  ops_geo_rto_rate: 0.40
+  confirmation_catch_scenarios: [0.20, 0.40, 0.60]
+  genuine_drop_scenarios: [0.01, 0.03, 0.08]
+  prepaid_conversion_multipliers: [0.5, 1.0, 1.5]
+  monthly_cod_orders_target: 1650

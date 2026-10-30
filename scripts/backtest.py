@@ -21,7 +21,7 @@ def _orders_with_risk() -> pd.DataFrame:
     risks = pd.read_csv(risk_path)[["order_id", "risk"]]
     return orders.merge(risks, on="order_id", validate="one_to_one")
 
-def _ops_actions(rows: pd.DataFrame, full: pd.DataFrame) -> list[str]:
+def _ops_actions(rows: pd.DataFrame, full: pd.DataFrame, cfg: Settings) -> list[str]:
     """Apply the ops proposal using only prior-month city and state outcomes."""
     actions = []
     months = rows["order_datetime"].dt.strftime("%Y-%m")
@@ -29,8 +29,10 @@ def _ops_actions(rows: pd.DataFrame, full: pd.DataFrame) -> list[str]:
         history = full[full["order_datetime"] < pd.Timestamp(f"{month}-01")]
         city_rate = history.groupby("city")["final_status"].apply(lambda values: (values == "RTO").mean())
         state_rate = history.groupby("state")["final_status"].apply(lambda values: (values == "RTO").mean())
-        risky_geo = city_rate.get(row["city"], 0) >= .40 or state_rate.get(row["state"], 0) >= .40
-        actions.append("HOLD" if float(row["risk"]) >= .50 or risky_geo else "SHIP")
+        geo_threshold = float(cfg["analysis"]["ops_geo_rto_rate"])
+        risk_threshold = float(cfg["analysis"]["ops_hold_risk"])
+        risky_geo = city_rate.get(row["city"], 0) >= geo_threshold or state_rate.get(row["state"], 0) >= geo_threshold
+        actions.append("HOLD" if float(row["risk"]) >= risk_threshold or risky_geo else "SHIP")
     return actions
 
 def _rule_decisions(rows: pd.DataFrame, cfg: Settings) -> list[object]:
@@ -69,7 +71,7 @@ def _policy_rows(rows: pd.DataFrame, full: pd.DataFrame, cfg: Settings) -> list[
     same_cfg = Settings(same_bands)
     base_decisions = _rule_decisions(rows, cfg)
     same_decisions = _rule_decisions(rows, same_cfg)
-    ops_actions = _ops_actions(rows, full)
+    ops_actions = _ops_actions(rows, full, cfg)
     policy_actions = {
         "ship_all": ["SHIP"] * len(rows),
         "ops_proposal": ops_actions,
@@ -85,9 +87,10 @@ def _policy_rows(rows: pd.DataFrame, full: pd.DataFrame, cfg: Settings) -> list[
 def _sensitivity(rows: pd.DataFrame, cfg: Settings) -> pd.DataFrame:
     """Evaluate configured rules across confirmation and prepaid assumptions."""
     rows_out = []
-    for catches in [.2, .4, .6]:
-        for drops in [.01, .03, .08]:
-            for multiplier in [.5, 1.0, 1.5]:
+    analysis = cfg["analysis"]
+    for catches in analysis["confirmation_catch_scenarios"]:
+        for drops in analysis["genuine_drop_scenarios"]:
+            for multiplier in analysis["prepaid_conversion_multipliers"]:
                 data = deepcopy(cfg.data)
                 data["assumptions"]["confirm_catches_share_of_returns"] = catches
                 data["assumptions"]["confirm_loses_share_of_genuine"] = drops
@@ -113,7 +116,7 @@ def main() -> None:
     sensitivity = _sensitivity(periods["held_out_month"], cfg)
     break_even = next((rate for rate in np.linspace(0, 1, 101) if _sensitivity_with_catch(periods["held_out_month"], cfg, float(rate)) < 0), None)
     monthly_count = full.groupby(full["order_datetime"].dt.strftime("%Y-%m")).size().mean()
-    scale_factor = 1650 / monthly_count
+    scale_factor = float(cfg["analysis"]["monthly_cod_orders_target"]) / monthly_count
     summary["scaled_net_inr"] = summary["net_inr"] * scale_factor
     summary["scale_factor"] = scale_factor
     Path("docs").mkdir(exist_ok=True)

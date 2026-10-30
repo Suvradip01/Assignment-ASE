@@ -193,18 +193,7 @@ The pipeline generates or updates:
 These results are based on a small historical sample and configured assumptions. Estimated
 impact is not measured business savings or losses.
 
-## 8. Submission checklist
-
-- [x] Source code, sample data, and local setup instructions.
-- [x] Decision log and generated findings/backtest/discount figures.
-- [ ] Founder business memo (1–2 pages): prepare this using the generated data and figures; the
-  memo is intentionally not included here.
-- [ ] AI usage log: complete [`docs/AI_USAGE_LOG.md`](docs/AI_USAGE_LOG.md) with tools actually
-  used and examples you personally reviewed. The template is intentionally blank.
-- [ ] GitHub submission: publish the repository or grant the hiring team access. This local
-  checkout has no Git remote configured.
-
-## 9. Known limits
+## 8. Known limits
 
 - The supplied dataset is a small historical sample and may not represent current customer
   behavior or full monthly order volume.
@@ -215,7 +204,7 @@ impact is not measured business savings or losses.
 - Groq requires a valid key, network access, and model access. Local rules and cache provide the
   fallback.
 
-## 10. Project layout
+## 9. Project layout
 
 ```text
 app/          Streamlit dashboard and interactive pages

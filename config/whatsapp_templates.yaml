@@ -1,0 +1,24 @@
+confirm_cod:
+  en: "Hi {first_name}! Thanks for ordering from {brand}. Order #{order_id}: {items}, ₹{order_value} (Cash on Delivery). Ship to: {address_short}, {city} {pincode}. Please confirm so we can dispatch."
+  hi: "Hi {first_name}! {brand} se order karne ke liye shukriya. Order #{order_id}: {items}, ₹{order_value} (Cash on Delivery). Pata: {address_short}, {city} {pincode}. Dispatch ke liye 'Haan' bhejein, cancel ke liye 'Nahi'."
+confirm_address:
+  en: "Hi {first_name}! Please reply with your full address, including house or flat number, area and landmark."
+  hi: "Hi {first_name}! Kripya poora pata bhejein: ghar/flat number, area aur landmark."
+nudge_prepaid:
+  en: "Hi {first_name}! Your {brand} order #{order_id} is ready. Pay online now and get ₹{discount} off: pay ₹{prepaid_total} instead of ₹{order_value}."
+  hi: "Hi {first_name}! Aapka {brand} order #{order_id} ready hai. Online pay karein aur ₹{discount} off paayein: ₹{prepaid_total} pay karein."
+nudge_prepaid_only:
+  en: "Pay online to place order #{order_id}; COD is unavailable for this delivery. Pay ₹{prepaid_total} after ₹{discount} off."
+  hi: "Order #{order_id} ke liye online payment karein; is delivery par COD nahi hai. ₹{discount} off ke baad ₹{prepaid_total} pay karein."
+reminder: {en: "A quick reminder: please confirm your order using the options above.", hi: "Yaad dila rahe hain: kripya upar diye options se order confirm karein."}
+payment_link: {en: "Mock payment link: {prepaid_total}. Reply PAID to simulate payment.", hi: "Mock payment link: {prepaid_total}. Payment simulate karne ke liye PAID bhejein."}
+payment_reminder: {en: "Your payment link is still available. Reply PAID if you completed payment.", hi: "Payment link abhi available hai. Payment ke baad PAID bhejein."}
+confirmed_ack: {en: "Thanks, we’ll dispatch your COD order.", hi: "Shukriya, aapka COD order dispatch hoga."}
+prepaid_ack: {en: "Payment confirmed. We’ll dispatch your prepaid order.", hi: "Payment confirm. Aapka prepaid order dispatch hoga."}
+cancelled_ack: {en: "Your order has been cancelled as requested.", hi: "Aapke kehne par order cancel kar diya gaya hai."}
+clarify: {en: "Sorry, we didn’t understand. Reply YES to confirm or NO to cancel.", hi: "Samajh nahi aaya. Confirm ke liye HAAN ya cancel ke liye NAHI bhejein."}
+address_received: {en: "Thanks, we received your address and will check it.", hi: "Shukriya, pata mil gaya. Hum ise check karenge."}
+no_reply_cancelled: {en: "We couldn’t confirm, so the order was cancelled. Reply within 7 days to reopen.", hi: "Confirmation nahi mila, order cancel hua. 7 din ke andar reply karke phir khol sakte hain."}
+human_handoff: {en: "A team member will review this and get back to you.", hi: "Hamari team isse check karke aapse sampark karegi."}
+opt_out_ack: {en: "You won’t receive more messages about this order.", hi: "Is order ke baare mein aur messages nahi bheje jayenge."}
+reopened_ack: {en: "We’ve reopened your order conversation.", hi: "Aapki order conversation phir se khol di hai."}

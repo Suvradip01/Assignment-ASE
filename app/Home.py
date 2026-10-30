@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
-from engine.config import load_config, config_hash
+from engine.config import load_config
 from engine.metrics import dashboard_aggregates
 from engine.store import connect
 
@@ -12,7 +12,6 @@ st.title("COD order decision engine")
 st.caption("Estimated impact based on model risk, not measured results")
 cfg = load_config()
 st.sidebar.markdown("Edit business thresholds in `config/settings.yaml`.")
-st.sidebar.write("Config hash", config_hash())
 db = connect()
 data = pd.read_sql_query("SELECT * FROM decisions", db)
 conversations = pd.read_sql_query("SELECT * FROM conversations", db)
